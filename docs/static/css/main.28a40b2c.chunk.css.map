@@ -1,0 +1,1 @@
+{"version":3,"sources":["styles.scss"],"names":[],"mappings":"AAEA,MACE,WAAY","file":"main.28a40b2c.chunk.css","sourcesContent":["@import '~antd/dist/antd.css';\n\n#root {\n  height: 100%;\n}\n"]}
