@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import styled, { css } from "styled-components/macro";
 import Wrapper from "../Wrapper";
 import {
@@ -8,10 +8,8 @@ import {
   padding,
 } from "../../libs/styles";
 import { Button, Slider, Radio } from "antd";
-import { path } from "ramda";
-import { Subscription, interval } from "rxjs";
-import useForceUpdate from "../../libs/useForceUpdate";
 import { useDebounce } from "../../libs/useDebounce";
+import useWordReader from "./useWordReader";
 
 const StyledHumanSpeedReader = styled.div`
   display: flex;
@@ -42,93 +40,6 @@ const WordInText = styled.span`
         `
       : null}
 `;
-
-function startReading({
-  sentences,
-  setCurrentWordIndex,
-  speed,
-}: {
-  sentences: string[][];
-  setCurrentWordIndex: (index: [number, number]) => void;
-  speed: number;
-}) {
-  let nextIndex: [number, number] = [0, 0];
-  const inner = () => {
-    setTimeout(() => {
-      nextIndex = [nextIndex[0], nextIndex[1] + 1];
-      if (path(nextIndex, sentences)) {
-        setCurrentWordIndex(nextIndex);
-        inner();
-        return;
-      }
-      nextIndex = [nextIndex[0] + 1, 0];
-      if (path(nextIndex, sentences)) {
-        setCurrentWordIndex(nextIndex);
-        inner();
-        return;
-      }
-      return;
-    }, speed);
-  };
-  inner();
-}
-
-function useWordReader({ sentences }: { sentences: string[][] }) {
-  const [isWorking, setIsWorking] = useState<boolean>(false);
-  const [speed, setSpeed] = useState<number>(300);
-  const wordIndex = useRef<[number, number]>([0, 0]);
-  const subscription = useRef<Subscription>();
-  const forceUpdate = useForceUpdate();
-
-  useEffect(() => {
-    if (!isWorking) return undefined;
-    stop();
-    start();
-  }, [speed]);
-
-  function setNextIndex() {
-    let nextIndex: [number, number] = [
-      wordIndex.current[0],
-      wordIndex.current[1] + 1,
-    ];
-    if (path(nextIndex, sentences)) {
-      wordIndex.current = nextIndex;
-      forceUpdate();
-      return;
-    }
-    nextIndex = [wordIndex.current[0] + 1, 0];
-    if (path(nextIndex, sentences)) {
-      wordIndex.current = nextIndex;
-      forceUpdate();
-      return;
-    }
-    return;
-  }
-
-  function start() {
-    stop();
-    setIsWorking(true);
-    subscription.current = interval(speed).subscribe(setNextIndex);
-  }
-
-  function stop() {
-    subscription.current?.unsubscribe();
-    setIsWorking(false);
-  }
-  return {
-    wordIndex: wordIndex.current,
-    setWordIndex: (index: [number, number]) => {
-      wordIndex.current = index;
-      forceUpdate();
-    },
-    start,
-    stop,
-    pause: () => subscription.current?.unsubscribe(),
-    setSpeed,
-    speed,
-    isWorking,
-  };
-}
 
 interface HumanSpeedReaderInterface {
   sentences: string[][];
